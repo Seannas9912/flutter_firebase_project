@@ -9,7 +9,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool today = true, tomorrow = false, newWeek = false;
+  bool today = true, tomorrow = false, newWeek = false, value = false;
   final String todayTitle = 'Today',
       tomorrowTitle = 'Tomorrow',
       nextWeekTitle = 'Next Week';
@@ -17,6 +17,15 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        backgroundColor: Colors.white,
+        child: const Icon(
+          Icons.add,
+          color: Color.fromARGB(255, 38, 90, 138),
+          size: 30,
+        ),
+      ),
       body: Container(
         padding: const EdgeInsets.only(top: 90, left: 20, right: 20),
         height: MediaQuery.of(context).size.height,
@@ -43,13 +52,13 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 7),
             Text(
               'Get things done with TODO',
               style: const TextStyle(
-                fontSize: 22,
+                fontSize: 14,
                 color: Colors.white,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w500,
               ),
             ),
             SizedBox(height: 10),
@@ -60,36 +69,58 @@ class _HomePageState extends State<HomePage> {
                     ? TaskButtons(title: todayTitle)
                     : GestureDetector(
                         onTap: () {
-                          today = true;
-                          tomorrow = false;
-                          newWeek = false;
-                          setState(() {});
+                          setState(() {
+                            today = true;
+                            tomorrow = false;
+                            newWeek = false;
+                          });
                         },
-                        child: textButton(title: todayTitle),
+                        child: _textButton(title: todayTitle),
                       ),
                 tomorrow
                     ? TaskButtons(title: tomorrowTitle)
                     : GestureDetector(
                         onTap: () {
-                          today = false;
-                          tomorrow = true;
-                          newWeek = false;
-                          setState(() {});
+                          setState(() {
+                            today = false;
+                            tomorrow = true;
+                            newWeek = false;
+                          });
                         },
-                        child: textButton(title: tomorrowTitle),
+                        child: _textButton(title: tomorrowTitle),
                       ),
                 newWeek
                     ? TaskButtons(title: nextWeekTitle)
                     : GestureDetector(
                         onTap: () {
-                          today = false;
-                          tomorrow = false;
-                          newWeek = true;
-                          setState(() {});
+                          setState(() {
+                            today = false;
+                            tomorrow = false;
+                            newWeek = true;
+                          });
                         },
-                        child: textButton(title: nextWeekTitle),
+                        child: _textButton(title: nextWeekTitle),
                       ),
               ],
+            ),
+            SizedBox(height: 20),
+            CheckboxListTile.adaptive(
+              activeColor: Colors.white10,
+              title: const Text(
+                'Check me',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w200,
+                ),
+              ),
+              value: value,
+              onChanged: (newValue) {
+                setState(() {
+                  value = newValue!;
+                });
+              },
+              controlAffinity: ListTileControlAffinity.leading,
             ),
           ],
         ),
@@ -97,11 +128,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget textButton({required String title}) {
+  Widget _textButton({required String title}) {
     return Text(
       title,
       style: const TextStyle(
-        fontSize: 22,
+        fontSize: 20,
         color: Colors.white,
         fontWeight: FontWeight.w400,
       ),

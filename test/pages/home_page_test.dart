@@ -36,4 +36,12 @@ void main() {
     // Verify that the "Today" button is initially active
     expect(find.text('Today'), findsOneWidget);
   });
+
+  testWidgets('HomePage has a FloatingActionButton', (WidgetTester tester) async {
+    // Build the HomePage widget
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    // Verify that the FloatingActionButton is present
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+  });
 }

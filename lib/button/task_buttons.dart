@@ -8,7 +8,7 @@ class TaskButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       borderRadius: BorderRadius.circular(20),
-      elevation: 5,
+      elevation: 2,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
         decoration: const BoxDecoration(
