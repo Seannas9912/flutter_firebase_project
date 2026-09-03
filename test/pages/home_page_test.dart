@@ -44,4 +44,37 @@ void main() {
     // Verify that the FloatingActionButton is present
     expect(find.byType(FloatingActionButton), findsOneWidget);
   });
+
+  testWidgets('HomePage FloatingActionButton opens the task input box', (WidgetTester tester) async {
+    // Build the HomePage widget
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    // Tap the FloatingActionButton
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pump(); // Rebuild the widget after the state change
+
+    // Verify that the task input box is now visible
+    expect(find.byType(TextField), findsOneWidget);
+  });
+
+  testWidgets('HomePage has a gradient background', (WidgetTester tester) async {
+    // Build the HomePage widget
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    // Verify that the background is a gradient
+    final container = tester.widget<Container>(find.byType(Container).first);
+    final decoration = container.decoration as BoxDecoration;
+    expect(decoration.gradient, isNotNull);
+  });
+
+  testWidgets('HomePage has a title with correct styling', (WidgetTester tester) async {
+    // Build the HomePage widget
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+
+    // Verify that the title has the correct styling
+    final titleText = tester.widget<Text>(find.text('HELLO\nSEAN'));
+    expect(titleText.style?.fontSize, 30);
+    expect(titleText.style?.color, Colors.white);
+    expect(titleText.style?.fontWeight, FontWeight.bold);
+  });
 }

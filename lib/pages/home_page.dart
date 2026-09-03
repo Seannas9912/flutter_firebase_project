@@ -13,12 +13,15 @@ class _HomePageState extends State<HomePage> {
   final String todayTitle = 'Today',
       tomorrowTitle = 'Tomorrow',
       nextWeekTitle = 'Next Week';
+  TextEditingController taskController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          _openBox();
+        },
         backgroundColor: Colors.white,
         child: const Icon(
           Icons.add,
@@ -138,4 +141,76 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  Future _openBox() => showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      content: SingleChildScrollView(
+        child: Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Icon(
+                      Icons.cancel,
+                      color: Colors.black,
+                      size: 30,
+                    ),
+                  ),
+                  SizedBox(width: 40),
+                  Text(
+                    'Add Task',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black, width: 2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: TextField(
+                  controller: taskController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter task Description',
+                    border: null,
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Text(
+                    'Add',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
