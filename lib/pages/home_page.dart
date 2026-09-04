@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_project/button/task_buttons.dart';
 import 'package:flutter_firebase_project/service/database.dart';
@@ -16,6 +17,23 @@ class _HomePageState extends State<HomePage> {
       tomorrowTitle = 'Tomorrow',
       nextWeekTitle = 'Next Week';
   TextEditingController taskController = TextEditingController();
+  Stream? todoStream;
+
+  Future getOnLoad() async {
+    String day = today
+        ? todayTitle
+        : tomorrow
+        ? tomorrowTitle
+        : nextWeekTitle;
+    todoStream = await Database.getAllWorkSavedForUser(day);
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    getOnLoad();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +91,8 @@ class _HomePageState extends State<HomePage> {
                 today
                     ? TaskButtons(title: todayTitle)
                     : GestureDetector(
-                        onTap: () {
+                        onTap: () async {
+                          await getOnLoad();
                           setState(() {
                             today = true;
                             tomorrow = false;
@@ -85,7 +104,8 @@ class _HomePageState extends State<HomePage> {
                 tomorrow
                     ? TaskButtons(title: tomorrowTitle)
                     : GestureDetector(
-                        onTap: () {
+                        onTap: () async {
+                          await getOnLoad();
                           setState(() {
                             today = false;
                             tomorrow = true;
@@ -97,7 +117,8 @@ class _HomePageState extends State<HomePage> {
                 newWeek
                     ? TaskButtons(title: nextWeekTitle)
                     : GestureDetector(
-                        onTap: () {
+                        onTap: () async {
+                          await getOnLoad();
                           setState(() {
                             today = false;
                             tomorrow = false;
@@ -109,27 +130,44 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             SizedBox(height: 20),
-            CheckboxListTile.adaptive(
-              activeColor: Colors.white10,
-              title: const Text(
-                'Check me',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w200,
-                ),
-              ),
-              value: value,
-              onChanged: (newValue) {
-                setState(() {
-                  value = newValue!;
-                });
-              },
-              controlAffinity: ListTileControlAffinity.leading,
-            ),
+            allWork(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget allWork() {
+    return StreamBuilder(
+      stream: todoStream,
+      builder: (context, AsyncSnapshot snapshot) {
+        return snapshot.hasData
+            ? ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: snapshot.data.docs.length,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot ds = snapshot.data.docs[index];
+                  return CheckboxListTile.adaptive(
+                    activeColor: Colors.white10,
+                    title: Text(
+                      ds["Work"],
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w200,
+                      ),
+                    ),
+                    value: ds["Completed"],
+                    onChanged: (newValue) async {
+                      await Database.completed(ds["Id"], ds["Work"]);
+                      setState(() {});
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                  );
+                },
+              )
+            : Center(child: CircularProgressIndicator.adaptive());
+      },
     );
   }
 
@@ -196,6 +234,7 @@ class _HomePageState extends State<HomePage> {
                 Map<String, dynamic> userTodo = {
                   "Work": taskController.text,
                   "Id": id,
+                  "Completed": false,
                 };
                 if (today) {
                   Database.addTodayWork(userTodo, id);
