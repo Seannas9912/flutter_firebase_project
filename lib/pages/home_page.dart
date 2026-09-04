@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_project/button/task_buttons.dart';
 import 'package:flutter_firebase_project/service/database.dart';
@@ -12,27 +13,37 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool today = true, tomorrow = false, newWeek = false, value = false;
+  bool today = true, tomorrow = false, newWeek = false;
   final String todayTitle = 'Today',
       tomorrowTitle = 'Tomorrow',
       nextWeekTitle = 'Next Week';
-  TextEditingController taskController = TextEditingController();
-  Stream? todoStream;
+  final TextEditingController taskController = TextEditingController();
+  Stream<QuerySnapshot<Map<String, dynamic>>>? todoStream;
 
-  Future getOnLoad() async {
-    String day = today
+  String get selectedDay => today
         ? todayTitle
         : tomorrow
         ? tomorrowTitle
         : nextWeekTitle;
-    todoStream = await Database.getAllWorkSavedForUser(day);
-    setState(() {});
+
+  void getOnLoad() {
+    if (Firebase.apps.isEmpty) {
+      todoStream = null;
+      return;
+    }
+    todoStream = Database.getAllWorkSavedForUser(selectedDay);
   }
 
   @override
   void initState() {
-    getOnLoad();
     super.initState();
+    getOnLoad();
+  }
+
+  @override
+  void dispose() {
+    taskController.dispose();
+    super.dispose();
   }
 
   @override
@@ -91,12 +102,12 @@ class _HomePageState extends State<HomePage> {
                 today
                     ? TaskButtons(title: todayTitle)
                     : GestureDetector(
-                        onTap: () async {
-                          await getOnLoad();
+                        onTap: () {
                           setState(() {
                             today = true;
                             tomorrow = false;
                             newWeek = false;
+                            getOnLoad();
                           });
                         },
                         child: _textButton(title: todayTitle),
@@ -104,12 +115,12 @@ class _HomePageState extends State<HomePage> {
                 tomorrow
                     ? TaskButtons(title: tomorrowTitle)
                     : GestureDetector(
-                        onTap: () async {
-                          await getOnLoad();
+                        onTap: () {
                           setState(() {
                             today = false;
                             tomorrow = true;
                             newWeek = false;
+                            getOnLoad();
                           });
                         },
                         child: _textButton(title: tomorrowTitle),
@@ -117,12 +128,12 @@ class _HomePageState extends State<HomePage> {
                 newWeek
                     ? TaskButtons(title: nextWeekTitle)
                     : GestureDetector(
-                        onTap: () async {
-                          await getOnLoad();
+                        onTap: () {
                           setState(() {
                             today = false;
                             tomorrow = false;
                             newWeek = true;
+                            getOnLoad();
                           });
                         },
                         child: _textButton(title: nextWeekTitle),
@@ -130,7 +141,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             SizedBox(height: 20),
-            allWork(),
+            Expanded(child: allWork()),
           ],
         ),
       ),
@@ -138,35 +149,48 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget allWork() {
-    return StreamBuilder(
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: todoStream,
-      builder: (context, AsyncSnapshot snapshot) {
-        return snapshot.hasData
-            ? ListView.builder(
-                padding: EdgeInsets.zero,
-                itemCount: snapshot.data.docs.length,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot ds = snapshot.data.docs[index];
-                  return CheckboxListTile.adaptive(
-                    activeColor: Colors.white10,
-                    title: Text(
-                      ds["Work"],
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w200,
-                      ),
-                    ),
-                    value: ds["Completed"],
-                    onChanged: (newValue) async {
-                      await Database.completed(ds["Id"], ds["Work"]);
-                      setState(() {});
-                    },
-                    controlAffinity: ListTileControlAffinity.leading,
-                  );
-                },
-              )
-            : Center(child: CircularProgressIndicator.adaptive());
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Unable to load tasks: ${snapshot.error}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator.adaptive());
+        }
+
+        return ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            final DocumentSnapshot<Map<String, dynamic>> ds =
+                snapshot.data!.docs[index];
+            return CheckboxListTile.adaptive(
+              activeColor: Colors.white10,
+              title: Text(
+                ds["Work"] as String,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w200,
+                ),
+              ),
+              value: ds["Completed"] as bool? ?? false,
+              onChanged: (newValue) async {
+                if (newValue == true) {
+                  final day = selectedDay;
+                  await Database.completed(ds["Id"] as String, day);
+                }
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+            );
+          },
+        );
       },
     );
   }
@@ -229,21 +253,22 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(height: 20),
             GestureDetector(
-              onTap: () {
+              onTap: () async {
                 String id = randomAlphaNumeric(10);
                 Map<String, dynamic> userTodo = {
                   "Work": taskController.text,
                   "Id": id,
                   "Completed": false,
                 };
-                if (today) {
-                  Database.addTodayWork(userTodo, id);
-                } else if (tomorrow) {
-                  Database.addTomorrowWork(userTodo, id);
-                } else {
-                  Database.addNextWeekWork(userTodo, id);
+                await (today
+                    ? Database.addTodayWork(userTodo, id)
+                    : tomorrow
+                    ? Database.addTomorrowWork(userTodo, id)
+                    : Database.addNextWeekWork(userTodo, id));
+                taskController.clear();
+                if (context.mounted) {
+                  Navigator.pop(context);
                 }
-                Navigator.pop(context);
               },
               child: Container(
                 width: double.infinity,

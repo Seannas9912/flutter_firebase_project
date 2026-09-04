@@ -31,14 +31,14 @@ class Database {
         .set(userWorkNextWeek);
   }
 
-  static Future<Stream<QuerySnapshot>> getAllWorkSavedForUser(
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getAllWorkSavedForUser(
     String day,
-  ) async {
-    return await FirebaseFirestore.instance.collection(day).snapshots();
+  ) {
+    return FirebaseFirestore.instance.collection(day).snapshots();
   }
 
-  static Future completed(String id, String day) async {
-    return await FirebaseFirestore.instance.collection(day).doc(id).update({
+  static Future<void> completed(String id, String day) {
+    return FirebaseFirestore.instance.collection(day).doc(id).update({
       "Completed": true,
     });
   }
