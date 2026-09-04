@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_project/button/task_buttons.dart';
+import 'package:flutter_firebase_project/service/database.dart';
+import 'package:random_string/random_string.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -146,50 +148,65 @@ class _HomePageState extends State<HomePage> {
     context: context,
     builder: (context) => AlertDialog(
       content: SingleChildScrollView(
-        child: Container(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Icon(
-                      Icons.cancel,
-                      color: Colors.black,
-                      size: 30,
-                    ),
-                  ),
-                  SizedBox(width: 40),
-                  Text(
-                    'Add Task',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: TextField(
-                  controller: taskController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter task Description',
-                    border: null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Icon(
+                    Icons.cancel,
+                    color: Colors.black,
+                    size: 30,
                   ),
                 ),
+                SizedBox(width: 40),
+                Text(
+                  'Add Task',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black, width: 2),
+                borderRadius: BorderRadius.circular(10),
               ),
-              SizedBox(height: 20),
-              Container(
+              child: TextField(
+                controller: taskController,
+                decoration: InputDecoration(
+                  hintText: 'Enter task Description',
+                  border: null,
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            GestureDetector(
+              onTap: () {
+                String id = randomAlphaNumeric(10);
+                Map<String, dynamic> userTodo = {
+                  "Work": taskController.text,
+                  "Id": id,
+                };
+                if (today) {
+                  Database.addTodayWork(userTodo, id);
+                } else if (tomorrow) {
+                  Database.addTomorrowWork(userTodo, id);
+                } else {
+                  Database.addNextWeekWork(userTodo, id);
+                }
+                Navigator.pop(context);
+              },
+              child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
@@ -207,8 +224,8 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     ),
