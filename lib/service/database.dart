@@ -1,34 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Database {
-  static Future addTodayWork(
+  static Future<void> addWork(
     Map<String, dynamic> userWorkToday,
     String id,
+    String title,
   ) async {
     await FirebaseFirestore.instance
-        .collection('Today')
+        .collection(title)
         .doc(id)
         .set(userWorkToday);
   }
 
-  static Future addTomorrowWork(
-    Map<String, dynamic> userWorkTomorrow,
-    String id,
-  ) async {
-    await FirebaseFirestore.instance
-        .collection('Tomorrow')
-        .doc(id)
-        .set(userWorkTomorrow);
-  }
-
-  static Future addNextWeekWork(
-    Map<String, dynamic> userWorkNextWeek,
-    String id,
-  ) async {
-    await FirebaseFirestore.instance
-        .collection('Next Week')
-        .doc(id)
-        .set(userWorkNextWeek);
+  static Future<void> deleteWork(String id, String day) async {
+    await FirebaseFirestore.instance.collection(day).doc(id).delete();
   }
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> getAllWorkSavedForUser(
@@ -37,9 +22,9 @@ class Database {
     return FirebaseFirestore.instance.collection(day).snapshots();
   }
 
-  static Future<void> completed(String id, String day) {
+  static Future<void> completed(String id, String day, bool? completed) {
     return FirebaseFirestore.instance.collection(day).doc(id).update({
-      "Completed": true,
+      "Completed": completed ?? false,
     });
   }
 }

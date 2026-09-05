@@ -21,10 +21,10 @@ class _HomePageState extends State<HomePage> {
   Stream<QuerySnapshot<Map<String, dynamic>>>? todoStream;
 
   String get selectedDay => today
-        ? todayTitle
-        : tomorrow
-        ? tomorrowTitle
-        : nextWeekTitle;
+      ? todayTitle
+      : tomorrow
+      ? tomorrowTitle
+      : nextWeekTitle;
 
   void getOnLoad() {
     if (Firebase.apps.isEmpty) {
@@ -61,7 +61,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       body: Container(
-        padding: const EdgeInsets.only(top: 90, left: 20, right: 20),
+        padding: const EdgeInsets.only(top: 30, left: 20, right: 20),
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
         decoration: const BoxDecoration(
@@ -86,7 +86,7 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 7),
+            SizedBox(height: 5),
             Text(
               'Get things done with TODO',
               style: const TextStyle(
@@ -95,7 +95,7 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 15),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -141,14 +141,14 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             SizedBox(height: 20),
-            Expanded(child: allWork()),
+            Expanded(child: _allWork()),
           ],
         ),
       ),
     );
   }
 
-  Widget allWork() {
+  Widget _allWork() {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: todoStream,
       builder: (context, snapshot) {
@@ -182,12 +182,24 @@ class _HomePageState extends State<HomePage> {
               ),
               value: ds["Completed"] as bool? ?? false,
               onChanged: (newValue) async {
-                if (newValue == true) {
-                  final day = selectedDay;
-                  await Database.completed(ds["Id"] as String, day);
-                }
+                final day = selectedDay;
+                await Database.completed(ds["Id"] as String, day, newValue);
               },
               controlAffinity: ListTileControlAffinity.leading,
+              secondary: IconButton(
+                icon: const Icon(
+                  size: 20,
+                  Icons.delete,
+                  color: Color.fromARGB(255, 231, 130, 130),
+                ),
+                onPressed: () {
+                  today
+                      ? Database.deleteWork(ds["Id"] as String, todayTitle)
+                      : tomorrow
+                      ? Database.deleteWork(ds["Id"] as String, tomorrowTitle)
+                      : Database.deleteWork(ds["Id"] as String, nextWeekTitle);
+                },
+              ),
             );
           },
         );
@@ -260,11 +272,12 @@ class _HomePageState extends State<HomePage> {
                   "Id": id,
                   "Completed": false,
                 };
-                await (today
-                    ? Database.addTodayWork(userTodo, id)
+
+                today
+                    ? Database.addWork(userTodo, id, todayTitle)
                     : tomorrow
-                    ? Database.addTomorrowWork(userTodo, id)
-                    : Database.addNextWeekWork(userTodo, id));
+                    ? Database.addWork(userTodo, id, tomorrowTitle)
+                    : Database.addWork(userTodo, id, nextWeekTitle);
                 taskController.clear();
                 if (context.mounted) {
                   Navigator.pop(context);
